@@ -1,0 +1,29 @@
+/*
++----------------------------------------------------------------+
+	Reset CSS					
++----------------------------------------------------------------+
+*/
+body,div,ul,ol,h1,h2,h3,h4,h5,h6,p {margin:0; padding:0}
+li {list-style:none; margin:0; padding:0}
+a {margin:0; outline:none; padding:0; text-decoration:none}
+
+/*
++----------------------------------------------------------------+
+	Body														
++----------------------------------------------------------------+
+*/
+body {background:#EDEDED url(../img/noisy.png) repeat; font:62.5% Myriad Pro}
+
+/*
++----------------------------------------------------------------+
+	Twitter Widget														
++----------------------------------------------------------------+
+*/
+#twitter {background-color:#fff; margin:30px auto; padding:30px 0 20px; width:300px; -webkit-box-shadow:0px 0px 13px rgba(39, 39, 39, 0.8); -moz-box-shadow:0px 0px 13px rgba(39, 39, 39, 0.8); box-shadow:0px 0px 13px rgba(39, 39, 39, 0.8);}
+#twitter h2 {background:url(../img/bg-twitter-header.png) no-repeat; height:60px; margin:0 auto 15px; width:240px}
+#twitter h2 span {display:none}
+#twitter li {color:#999; font-size:1.4em; padding:10px 29px}
+#twitter li:hover {background-color:#fafafa; border-left:5px solid #34bd31; padding-left:24px}
+#twitter li a {color:#24b4ff}
+#twitter li span {display:block}
+#twitter li .created {margin-top:5px}
