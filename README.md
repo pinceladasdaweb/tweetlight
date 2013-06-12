@@ -1,3 +1,5 @@
+Update: Twitter has completed the deprecation process for API version 1, so the Twitter URL no longer work more.
+
 [Tweetlight](http://www.pinceladasdaweb.com.br/blog/uploads/tweetlight/)
 ==========
 
