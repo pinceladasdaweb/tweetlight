@@ -1,34 +1,24 @@
-var jsonp = {
-	callbackCounter: 0,
-	fetch: function(url, callback) {
-		var fn = 'Callback_' + this.callbackCounter++;
-		window[fn] = this.evalJSONP(callback);
-		url = url.replace('=Callback', '=' + fn);
-		
-		var scriptTag = document.createElement('SCRIPT');
-		scriptTag.src = url;
-		document.getElementsByTagName('HEAD')[0].appendChild(scriptTag);
-	},
-	evalJSONP: function(callback) {
-		return function(data) {
-			var validJSON = false;
-			if(typeof data === "string"){
-				try {
-					validJSON = JSON.parse(data);
-				} catch (e) {
-					/*invalid JSON*/	
+var Lib = {
+	ajax: {
+		xhr: function() {
+			var instance = new XMLHttpRequest();
+			return instance;
+		},
+		getJSON: function(options, callback) {
+			var xhttp = this.xhr();
+			options.url = options.url || location.href;
+			options.data = options.data || null;
+			callback = callback || function() {};
+			xhttp.open('GET', options.url, true);
+			xhttp.send(options.data);
+			xhttp.onreadystatechange = function() {
+				if (xhttp.status == 200 && xhttp.readyState == 4) {
+					callback(xhttp.responseText);
 				}
-			} else {
-				validJSON = JSON.parse(JSON.stringify(data));	
-			}
-			if (validJSON) {
-                callback(validJSON);
-            } else {
-                throw("JSONP call returned invalid or empty JSON");
-            }
+			};
 		}
 	}
-}
+};
 
 var K = function () {
 	var a = navigator.userAgent;
@@ -39,20 +29,23 @@ var K = function () {
 
 var Tweetlight = {
 	init: function(config) {
-        this.url = "https://api.twitter.com/1/statuses/user_timeline.json?include_entities=true&include_rts=true&screen_name="+config.username+"&count="+config.count+"&callback=Callback",
+		this.url = './tweets.php?username=' + config.username + '&count=' + config.count + '&api=statuses_userTimeline',
 		this.fetch();
     },
 	fetch: function() {
 		var self = this;
 		
-		jsonp.fetch(this.url, function(tweets) {
+		Lib.ajax.getJSON({url: this.url}, function(data){
+			var tweets = JSON.parse(data);
+			
 			var timeline = document.getElementById('tweets'),
 			content = '';
 			for (var t in tweets) {
-				content += '<li><span class="tweet">'+Tweetlight.twitterLinks(tweets[t].text)+'</span> <span class="created">'+Tweetlight.prettyDate(tweets[t].created_at)+'</span></li>';
+				content += '<li><span class="tweet">'+self.twitterLinks(tweets[t].text)+'</span> <span class="created">'+self.prettyDate(tweets[t].created)+'</span></li>';
 			}
-  			timeline.innerHTML = content;	
+  			timeline.innerHTML = content;
 		});
+		
 	},
 	prettyDate: function(a) {
 		var b = new Date();
