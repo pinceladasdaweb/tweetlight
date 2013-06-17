@@ -1,25 +1,3 @@
-var Lib = {
-	ajax: {
-		xhr: function() {
-			var instance = new XMLHttpRequest();
-			return instance;
-		},
-		getJSON: function(options, callback) {
-			var xhttp = this.xhr();
-			options.url = options.url || location.href;
-			options.data = options.data || null;
-			callback = callback || function() {};
-			xhttp.open('GET', options.url, true);
-			xhttp.send(options.data);
-			xhttp.onreadystatechange = function() {
-				if (xhttp.status == 200 && xhttp.readyState == 4) {
-					callback(xhttp.responseText);
-				}
-			};
-		}
-	}
-};
-
 var K = function () {
 	var a = navigator.userAgent;
 	return {
@@ -32,10 +10,27 @@ var Tweetlight = {
 		this.url = './tweets.php?username=' + config.username + '&count=' + config.count + '&api=statuses_userTimeline',
 		this.fetch();
     },
+    xhr: function() {
+    	var instance = new XMLHttpRequest();
+    	return instance;
+    },
+    getJSON: function(options, callback) {
+    	var xhttp = this.xhr();
+    	options.url = options.url || location.href;
+    	options.data = options.data || null;
+    	callback = callback || function() {};
+    	xhttp.open('GET', options.url, true);
+    	xhttp.send(options.data);
+    	xhttp.onreadystatechange = function() {
+    		if (xhttp.status == 200 && xhttp.readyState == 4) {
+    			callback(xhttp.responseText);
+    		}
+    	}
+    },
 	fetch: function() {
 		var self = this;
 		
-		Lib.ajax.getJSON({url: this.url}, function(data){
+		self.getJSON({url: this.url}, function(data){
 			var tweets = JSON.parse(data);
 			
 			var timeline = document.getElementById('tweets'),
