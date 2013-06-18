@@ -15,11 +15,12 @@ Display your latest tweets with pure JavaScript and PHP OAuth Library.
 ```
 
 3. From within a script tag or a JS file
-```javascript	
-	Tweetlight.init({
-		username: 'pinceladasdaweb',	// Twitter username
-		count: 4						// Number of tweets to display
-	});
+```javascript   
+    Tweetlight.init({
+        username: 'pinceladasdaweb',    // Twitter username
+        container: '#tweets',           //domNode to attach to
+        count: 4                        // Number of tweets to display
+    });
 ```
 
 4. In the tweets.php file, complete the [Twitter OAuth settings] (https://dev.twitter.com/docs/auth/oauth/faq)
