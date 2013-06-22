@@ -1,3 +1,12 @@
+/*---------------
+* Tweetlight
+* Display your latest tweets with pure JavaScript and PHP OAuth Library
+* Example and documentation at: https://github.com/pinceladasdaweb/tweetlight
+* Copyright (c) 2013
+* Version: 2.0.0 (15-JUN-2013)
+* Licensed under the MIT license: http://www.opensource.org/licenses/mit-license.php
+* Requires: Twitter API Authentication
+---------------*/
 var K = function () {
     var a = navigator.userAgent;
     return {
