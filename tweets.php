@@ -1,4 +1,4 @@
-<?
+<?php
 header('Content-type: application/json');
 
 //Twitter OAuth library: https://github.com/mynetx/codebird-php
