@@ -111,7 +111,7 @@ var K = function () {
 
 var Tweetlight = {
     init: function(config) {
-        this.url = './tweets.php?username=' + config.username + '&count=' + config.count + '&api=statuses_userTimeline';
+        this.url = './tweets.php?q=' + encodeURIComponent(config.query) + '&count=' + config.count + '&api=search_tweets';
         this.container = config.container;
         this.fetch();
     },
@@ -134,18 +134,19 @@ var Tweetlight = {
     },
     fetch: function() {
         var self = this;
-        
+
         self.getJSON({url: this.url}, function(data){
-            var tweets = JSON.parse(data);
-            
+            var tweets = JSON.parse(data),
+                tweet = tweets.statuses;
+
             var timeline = document.querySelector(self.container),
             content = '';
-            for (var t in tweets) {
-                content += '<li><span class="tweet">'+self.twitterLinks(tweets[t].text)+'</span> <span class="created">'+self.prettyDate(tweets[t].created)+'</span></li>';
+            for (var t in tweet) {
+                content += '<li><span class="tweet"><a href="https://twitter.com/'+tweet[t].user.screen_name+'">'+tweet[t].user.screen_name+'</a>: '+self.twitterLinks(tweet[t].text)+'</span> <span class="created">'+self.prettyDate(tweet[t].created_at)+'</span></li>';
             }
             timeline.innerHTML = content;
         });
-        
+
     },
     prettyDate: function(a) {
         var b = new Date();
