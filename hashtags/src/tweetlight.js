@@ -1,6 +1,6 @@
 /*---------------
 * Tweetlight
-* Display your latest tweets with pure JavaScript and PHP OAuth Library
+* Display all tweets with a certain hashtag with pure JavaScript and PHP OAuth Library
 * Example and documentation at: https://github.com/pinceladasdaweb/tweetlight
 * Copyright (c) 2013
 * Version: 2.0.0 (15-JUN-2013)
@@ -98,7 +98,7 @@ var Tweetlight = {
     twitterLinks: function(text) {
         text = text.replace(/(https?:\/\/)([\w\-:;?&=+.%#\/]+)/gi, '<a href="$1$2">$2</a>')
         .replace(/(^|\W)@(\w+)/g, '$1<a href="https://twitter.com/$2">@$2</a>')
-        .replace(/(^|\W)#(\w+)/g, '$1<a href="https://search.twitter.com/search?q=%23$2">#$2</a>');
+        .replace(/(^|\W)#(\w+)/g, '$1<a href="https://twitter.com/search?q=%23$2">#$2</a>');
         return text
     }
 }
