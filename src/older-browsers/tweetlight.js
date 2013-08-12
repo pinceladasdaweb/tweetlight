@@ -71,7 +71,7 @@ JSON.parse = JSON.parse || function (str) {
                 resultSet = [];
 
             style.addRule(selector, "foo:bar");
-            
+
             for (i = 0; i < l; i += 1) {
                 if (all[i].currentStyle.foo === "bar") {
                     resultSet.push(all[i]);
@@ -113,6 +113,7 @@ var Tweetlight = {
     init: function(config) {
         this.url = './tweets.php?username=' + config.username + '&count=' + config.count + '&api=statuses_userTimeline';
         this.container = config.container;
+        this.onComplete = config.onComplete || function(){};
         this.fetch();
     },
     xhr: function() {
@@ -134,18 +135,20 @@ var Tweetlight = {
     },
     fetch: function() {
         var self = this;
-        
+
         self.getJSON({url: this.url}, function(data){
             var tweets = JSON.parse(data);
-            
+
             var timeline = document.querySelector(self.container),
             content = '';
             for (var t in tweets) {
                 content += '<li><span class="tweet">'+self.twitterLinks(tweets[t].text)+'</span> <span class="created">'+self.prettyDate(tweets[t].created)+'</span></li>';
             }
             timeline.innerHTML = content;
+
+            self.onComplete();
         });
-        
+
     },
     prettyDate: function(a) {
         var b = new Date();

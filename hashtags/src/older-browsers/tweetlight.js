@@ -71,7 +71,7 @@ JSON.parse = JSON.parse || function (str) {
                 resultSet = [];
 
             style.addRule(selector, "foo:bar");
-            
+
             for (i = 0; i < l; i += 1) {
                 if (all[i].currentStyle.foo === "bar") {
                     resultSet.push(all[i]);
@@ -113,6 +113,7 @@ var Tweetlight = {
     init: function(config) {
         this.url = './tweets.php?q=' + encodeURIComponent(config.query) + '&count=' + config.count + '&api=search_tweets';
         this.container = config.container;
+        this.onComplete = config.onComplete || function(){};
         this.fetch();
     },
     xhr: function() {
@@ -145,6 +146,8 @@ var Tweetlight = {
                 content += '<li><span class="tweet"><a href="https://twitter.com/'+tweet[t].user.screen_name+'">'+tweet[t].user.screen_name+'</a>: '+self.twitterLinks(tweet[t].text)+'</span> <span class="created">'+self.prettyDate(tweet[t].created_at)+'</span></li>';
             }
             timeline.innerHTML = content;
+
+            self.onComplete();
         });
 
     },
