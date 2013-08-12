@@ -15,11 +15,14 @@ Display your latest tweets with pure JavaScript and PHP OAuth Library.
 ```
 
 3. From within a script tag or a JS file
-```javascript   
+```javascript
     Tweetlight.init({
         username: 'pinceladasdaweb',    // Twitter username
-        container: '#tweets',           //domNode to attach to
-        count: 4                        // Number of tweets to display
+        container: '#tweets',           // domNode to attach to
+        count: 4,                       // Number of tweets to display
+        onComplete: function(){
+            console.log('Awesome APP'); // Callback to execute after fetch tweets
+        }
     });
 ```
 
