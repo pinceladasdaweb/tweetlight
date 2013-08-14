@@ -17,7 +17,10 @@ Display all tweets with a certain hashtag?
     Tweetlight.init({
         container: '#tweets',           //domNode to attach to
         query: '#html5',                // Query to search on Twitter, default 'twitter'
-        count: 4                        // Number of tweets to display, default 5
+        count: 4,                       // Number of tweets to display, default 5
+        onComplete: function(){
+            console.log('Awesome APP'); // Callback to execute after fetch tweets
+        }
     });
 ```
 
