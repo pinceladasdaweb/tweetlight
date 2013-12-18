@@ -31,7 +31,3 @@ $CONSUMER_SECRET = '';
 $ACCESS_TOKEN = '';
 $ACCESS_TOKEN_SECRET = '';
 ```
-
-##Support Older Browsers
-
-See [here](https://github.com/pinceladasdaweb/tweetlight/tree/master/hashtags/src/older-browsers) how to support older browsers.
