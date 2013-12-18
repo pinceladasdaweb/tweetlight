@@ -12,7 +12,7 @@ module.exports = function (grunt) {
             },
             hashtag: {
                 files: {
-                    'hashtag/src/tweetlight.min.js': ['hashtag/src/tweetlight.js']
+                    'hashtags/src/tweetlight.min.js': ['hashtags/src/tweetlight.js']
                 }
             },
         }
