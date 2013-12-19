@@ -31,3 +31,7 @@ $CONSUMER_SECRET = '';
 $ACCESS_TOKEN = '';
 $ACCESS_TOKEN_SECRET = '';
 ```
+
+##Important Note
+
+It is mandatory to file cacert.pem be on the same level/directory that codebird.php file because Twitter requires [secure connections in their API] (https://dev.twitter.com/discussions/24239).
