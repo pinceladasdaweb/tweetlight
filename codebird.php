@@ -6,9 +6,9 @@ namespace Codebird;
  * A Twitter library in PHP.
  *
  * @package codebird
- * @version 2.5.0-dev
- * @author J.M. <me@mynetx.net>
- * @copyright 2010-2013 J.M. <me@mynetx.net>
+ * @version 2.4.1
+ * @author Jublo IT Solutions &lt;support@jublo.net&gt;
+ * @copyright 2010-2014 Jublo IT Solutions &lt;support@jublo.net&gt;
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -107,17 +107,7 @@ class Codebird
     /**
      * The current Codebird version
      */
-    protected $_version = '2.5.0-dev';
-
-    /**
-     * Request timeout
-     */
-    protected $_timeout;
-
-    /**
-     * Connection timeout
-     */
-    protected $_connectionTimeout;
+    protected $_version = '2.4.1';
 
     /**
      * Returns singleton class instance
@@ -184,30 +174,6 @@ class Codebird
     }
 
     /**
-     * Sets request timeout in milliseconds
-     *
-     * @param int $timeout Request timeout in milliseconds
-     *
-     * @return void
-     */
-    public function setTimeout($timeout)
-    {
-        $this->_timeout = (int) $timeout;
-    }
-
-    /**
-     * Sets connection timeout in milliseconds
-     *
-     * @param int $timeout Connection timeout in milliseconds
-     *
-     * @return void
-     */
-    public function setConnectionTimeout($timeout)
-    {
-        $this->_connectionTimeout = (int) $timeout;
-    }
-
-    /**
      * Sets the format for API replies
      *
      * @param int $return_format One of these:
@@ -219,166 +185,6 @@ class Codebird
     public function setReturnFormat($return_format)
     {
         $this->_return_format = $return_format;
-    }
-
-    /**
-     * Get allowed API methods, sorted by GET or POST
-     * Watch out for multiple-method "account/settings"!
-     *
-     * @return array $apimethods
-     */
-    public function getApiMethods()
-    {
-        static $apimethods = array(
-            'GET' => array(
-                // Timelines
-                'statuses/mentions_timeline',
-                'statuses/user_timeline',
-                'statuses/home_timeline',
-                'statuses/retweets_of_me',
-
-                // Tweets
-                'statuses/retweets/:id',
-                'statuses/show/:id',
-                'statuses/oembed',
-
-                // Search
-                'search/tweets',
-
-                // Direct Messages
-                'direct_messages',
-                'direct_messages/sent',
-                'direct_messages/show',
-
-                // Friends & Followers
-                'friendships/no_retweets/ids',
-                'friends/ids',
-                'followers/ids',
-                'friendships/lookup',
-                'friendships/incoming',
-                'friendships/outgoing',
-                'friendships/show',
-                'friends/list',
-                'followers/list',
-
-                // Users
-                'account/settings',
-                'account/verify_credentials',
-                'blocks/list',
-                'blocks/ids',
-                'users/lookup',
-                'users/show',
-                'users/search',
-                'users/contributees',
-                'users/contributors',
-                'users/profile_banner',
-
-                // Suggested Users
-                'users/suggestions/:slug',
-                'users/suggestions',
-                'users/suggestions/:slug/members',
-
-                // Favorites
-                'favorites/list',
-
-                // Lists
-                'lists/list',
-                'lists/statuses',
-                'lists/memberships',
-                'lists/subscribers',
-                'lists/subscribers/show',
-                'lists/members/show',
-                'lists/members',
-                'lists/show',
-                'lists/subscriptions',
-
-                // Saved searches
-                'saved_searches/list',
-                'saved_searches/show/:id',
-
-                // Places & Geo
-                'geo/id/:place_id',
-                'geo/reverse_geocode',
-                'geo/search',
-                'geo/similar_places',
-
-                // Trends
-                'trends/place',
-                'trends/available',
-                'trends/closest',
-
-                // OAuth
-                'oauth/authenticate',
-                'oauth/authorize',
-
-                // Help
-                'help/configuration',
-                'help/languages',
-                'help/privacy',
-                'help/tos',
-                'application/rate_limit_status'
-            ),
-            'POST' => array(
-                // Tweets
-                'statuses/destroy/:id',
-                'statuses/update',
-                'statuses/retweet/:id',
-                'statuses/update_with_media',
-
-                // Direct Messages
-                'direct_messages/destroy',
-                'direct_messages/new',
-
-                // Friends & Followers
-                'friendships/create',
-                'friendships/destroy',
-                'friendships/update',
-
-                // Users
-                'account/settings__post',
-                'account/update_delivery_device',
-                'account/update_profile',
-                'account/update_profile_background_image',
-                'account/update_profile_colors',
-                'account/update_profile_image',
-                'blocks/create',
-                'blocks/destroy',
-                'account/update_profile_banner',
-                'account/remove_profile_banner',
-
-                // Favorites
-                'favorites/destroy',
-                'favorites/create',
-
-                // Lists
-                'lists/members/destroy',
-                'lists/subscribers/create',
-                'lists/subscribers/destroy',
-                'lists/members/create_all',
-                'lists/members/create',
-                'lists/destroy',
-                'lists/update',
-                'lists/create',
-                'lists/members/destroy_all',
-
-                // Saved Searches
-                'saved_searches/create',
-                'saved_searches/destroy/:id',
-
-                // Places & Geo
-                'geo/place',
-
-                // Spam Reporting
-                'users/report_spam',
-
-                // OAuth
-                'oauth/access_token',
-                'oauth/request_token',
-                'oauth2/token',
-                'oauth2/invalidate_token'
-            )
-        );
-        return $apimethods;
     }
 
     /**
@@ -749,8 +555,155 @@ class Codebird
                 break;
         }
 
-        $apimethods = $this->getApiMethods();
-        foreach ($apimethods as $httpmethod => $methods) {
+        $httpmethods         = array();
+        $httpmethods['GET']  = array(
+            // Timelines
+            'statuses/mentions_timeline',
+            'statuses/user_timeline',
+            'statuses/home_timeline',
+            'statuses/retweets_of_me',
+
+            // Tweets
+            'statuses/retweets/:id',
+            'statuses/show/:id',
+            'statuses/oembed',
+
+            // Search
+            'search/tweets',
+
+            // Direct Messages
+            'direct_messages',
+            'direct_messages/sent',
+            'direct_messages/show',
+
+            // Friends & Followers
+            'friendships/no_retweets/ids',
+            'friends/ids',
+            'followers/ids',
+            'friendships/lookup',
+            'friendships/incoming',
+            'friendships/outgoing',
+            'friendships/show',
+            'friends/list',
+            'followers/list',
+
+            // Users
+            'account/settings',
+            'account/verify_credentials',
+            'blocks/list',
+            'blocks/ids',
+            'users/lookup',
+            'users/show',
+            'users/search',
+            'users/contributees',
+            'users/contributors',
+            'users/profile_banner',
+
+            // Suggested Users
+            'users/suggestions/:slug',
+            'users/suggestions',
+            'users/suggestions/:slug/members',
+
+            // Favorites
+            'favorites/list',
+
+            // Lists
+            'lists/list',
+            'lists/statuses',
+            'lists/memberships',
+            'lists/subscribers',
+            'lists/subscribers/show',
+            'lists/members/show',
+            'lists/members',
+            'lists/show',
+            'lists/subscriptions',
+
+            // Saved searches
+            'saved_searches/list',
+            'saved_searches/show/:id',
+
+            // Places & Geo
+            'geo/id/:place_id',
+            'geo/reverse_geocode',
+            'geo/search',
+            'geo/similar_places',
+
+            // Trends
+            'trends/place',
+            'trends/available',
+            'trends/closest',
+
+            // OAuth
+            'oauth/authenticate',
+            'oauth/authorize',
+
+            // Help
+            'help/configuration',
+            'help/languages',
+            'help/privacy',
+            'help/tos',
+            'application/rate_limit_status'
+        );
+        $httpmethods['POST'] = array(
+            // Tweets
+            'statuses/destroy/:id',
+            'statuses/update',
+            'statuses/retweet/:id',
+            'statuses/update_with_media',
+
+            // Direct Messages
+            'direct_messages/destroy',
+            'direct_messages/new',
+
+            // Friends & Followers
+            'friendships/create',
+            'friendships/destroy',
+            'friendships/update',
+
+            // Users
+            'account/settings__post',
+            'account/update_delivery_device',
+            'account/update_profile',
+            'account/update_profile_background_image',
+            'account/update_profile_colors',
+            'account/update_profile_image',
+            'blocks/create',
+            'blocks/destroy',
+            'account/update_profile_banner',
+            'account/remove_profile_banner',
+
+            // Favorites
+            'favorites/destroy',
+            'favorites/create',
+
+            // Lists
+            'lists/members/destroy',
+            'lists/subscribers/create',
+            'lists/subscribers/destroy',
+            'lists/members/create_all',
+            'lists/members/create',
+            'lists/destroy',
+            'lists/update',
+            'lists/create',
+            'lists/members/destroy_all',
+
+            // Saved Searches
+            'saved_searches/create',
+            'saved_searches/destroy/:id',
+
+            // Places & Geo
+            'geo/place',
+
+            // Spam Reporting
+            'users/report_spam',
+
+            // OAuth
+            'oauth/access_token',
+            'oauth/request_token',
+            'oauth2/token',
+            'oauth2/invalidate_token'
+        );
+        foreach ($httpmethods as $httpmethod => $methods) {
             if (in_array($method, $methods)) {
                 return $httpmethod;
             }
@@ -951,14 +904,6 @@ class Codebird
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($ch, CURLOPT_CAINFO, __DIR__ . '/cacert.pem');
-
-        if (isset($this->_timeout)) {
-            curl_setopt($ch, CURLOPT_TIMEOUT_MS, $this->_timeout);
-        }
-
-        if (isset($this->_connectionTimeout)) {
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, $this->_connectionTimeout);
-        }
 
         $reply = curl_exec($ch);
 
