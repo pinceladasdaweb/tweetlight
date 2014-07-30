@@ -6,9 +6,9 @@ namespace Codebird;
  * A Twitter library in PHP.
  *
  * @package codebird
- * @version 2.4.1
- * @author Jublo IT Solutions &lt;support@jublo.net&gt;
- * @copyright 2010-2014 Jublo IT Solutions &lt;support@jublo.net&gt;
+ * @version 2.5.0
+ * @author Jublo Solutions <support@jublo.net>
+ * @copyright 2010-2014 Jublo Solutions <support@jublo.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -80,9 +80,19 @@ class Codebird
     protected static $_endpoint = 'https://api.twitter.com/1.1/';
 
     /**
-     * The API endpoint to use for OAuth requests
+     * The media API endpoint to use
+     */
+    protected static $_endpoint_media = 'https://upload.twitter.com/1.1/';
+
+    /**
+     * The API endpoint base to use
      */
     protected static $_endpoint_oauth = 'https://api.twitter.com/';
+
+    /**
+     * The API endpoint to use for old requests
+     */
+    protected static $_endpoint_old = 'https://api.twitter.com/1/';
 
     /**
      * The Request or access token. Used to sign requests
@@ -107,7 +117,17 @@ class Codebird
     /**
      * The current Codebird version
      */
-    protected $_version = '2.4.1';
+    protected $_version = '2.5.0';
+
+    /**
+     * Request timeout
+     */
+    protected $_timeout;
+
+    /**
+     * Connection timeout
+     */
+    protected $_connectionTimeout;
 
     /**
      * Returns singleton class instance
@@ -117,7 +137,7 @@ class Codebird
      */
     public static function getInstance()
     {
-        if (self::$_instance == null) {
+        if (self::$_instance === null) {
             self::$_instance = new self;
         }
         return self::$_instance;
@@ -174,6 +194,30 @@ class Codebird
     }
 
     /**
+     * Sets request timeout in milliseconds
+     *
+     * @param int $timeout Request timeout in milliseconds
+     *
+     * @return void
+     */
+    public function setTimeout($timeout)
+    {
+        $this->_timeout = (int) $timeout;
+    }
+
+    /**
+     * Sets connection timeout in milliseconds
+     *
+     * @param int $timeout Connection timeout in milliseconds
+     *
+     * @return void
+     */
+    public function setConnectionTimeout($timeout)
+    {
+        $this->_connectionTimeout = (int) $timeout;
+    }
+
+    /**
      * Sets the format for API replies
      *
      * @param int $return_format One of these:
@@ -203,8 +247,14 @@ class Codebird
         if (count($params) > 0) {
             if (is_array($params[0])) {
                 $apiparams = $params[0];
+                if (! is_array($apiparams)) {
+                    $apiparams = array();
+                }
             } else {
                 parse_str($params[0], $apiparams);
+                if (! is_array($apiparams)) {
+                    $apiparams = array();
+                }
                 // remove auto-added slashes if on magic quotes steroids
                 if (get_magic_quotes_gpc()) {
                     foreach($apiparams as $key => $value) {
@@ -235,6 +285,11 @@ class Codebird
             $app_only_auth = !! $params[1];
         }
 
+        // reset token when requesting a new token (causes 401 for signature error on 2nd+ requests)
+        if ($fn === 'oauth_requestToken') {
+            $this->setToken(null, null);
+        }
+
         // map function name to API method
         $method = '';
 
@@ -247,7 +302,7 @@ class Codebird
             $method .= $path[$i];
         }
         // undo replacement for URL parameters
-        $url_parameters_with_underscore = array('screen_name');
+        $url_parameters_with_underscore = array('screen_name', 'place_id');
         foreach ($url_parameters_with_underscore as $param) {
             $param = strtoupper($param);
             $replacement_was = str_replace('_', '/', $param);
@@ -256,12 +311,12 @@ class Codebird
 
         // replace AA by URL parameters
         $method_template = $method;
-        $match   = array();
+        $match           = array();
         if (preg_match('/[A-Z_]{2,}/', $method, $match)) {
             foreach ($match as $param) {
                 $param_l = strtolower($param);
                 $method_template = str_replace($param, ':' . $param_l, $method_template);
-                if (!isset($apiparams[$param_l])) {
+                if (! isset($apiparams[$param_l])) {
                     for ($i = 0; $i < 26; $i++) {
                         $method_template = str_replace(chr(65 + $i), '_' . chr(97 + $i), $method_template);
                     }
@@ -283,14 +338,15 @@ class Codebird
 
         $httpmethod = $this->_detectMethod($method_template, $apiparams);
         $multipart  = $this->_detectMultipart($method_template);
+        $internal   = $this->_detectInternal($method_template);
 
         return $this->_callApi(
             $httpmethod,
             $method,
-            $method_template,
             $apiparams,
             $multipart,
-            $app_only_auth
+            $app_only_auth,
+            $internal
         );
     }
 
@@ -301,14 +357,21 @@ class Codebird
     /**
      * Gets the OAuth authenticate URL for the current request token
      *
-     * @return string The OAuth authenticate URL
+     * @param optional bool   $force_login Whether to force the user to enter their login data
+     * @param optional string $screen_name Screen name to repopulate the user name with
+     * @param optional string $type        'authenticate' or 'authorize', to avoid duplicate code
+     *
+     * @return string The OAuth authenticate/authorize URL
      */
-    public function oauth_authenticate($force_login = NULL, $screen_name = NULL)
+    public function oauth_authenticate($force_login = NULL, $screen_name = NULL, $type = 'authenticate')
     {
-        if ($this->_oauth_token == null) {
-            throw new \Exception('To get the authenticate URL, the OAuth token must be set.');
+        if (! in_array($type, array('authenticate', 'authorize'))) {
+            throw new \Exception('To get the ' . $type . ' URL, use the correct third parameter, or omit it.');
         }
-        $url = self::$_endpoint_oauth . 'oauth/authenticate?oauth_token=' . $this->_url($this->_oauth_token);
+        if ($this->_oauth_token === null) {
+            throw new \Exception('To get the ' . $type . ' URL, the OAuth token must be set.');
+        }
+        $url = self::$_endpoint_oauth . 'oauth/' . $type . '?oauth_token=' . $this->_url($this->_oauth_token);
         if ($force_login) {
             $url .= "&force_login=1";
         }
@@ -320,22 +383,14 @@ class Codebird
 
     /**
      * Gets the OAuth authorize URL for the current request token
+     * @param optional bool   $force_login Whether to force the user to enter their login data
+     * @param optional string $screen_name Screen name to repopulate the user name with
      *
      * @return string The OAuth authorize URL
      */
     public function oauth_authorize($force_login = NULL, $screen_name = NULL)
     {
-        if ($this->_oauth_token == null) {
-            throw new \Exception('To get the authorize URL, the OAuth token must be set.');
-        }
-        $url = self::$_endpoint_oauth . 'oauth/authorize?oauth_token=' . $this->_url($this->_oauth_token);
-        if ($force_login) {
-            $url .= "&force_login=1";
-        }
-        if ($screen_name) {
-            $url .= "&screen_name=" . $screen_name;
-        }
-        return $url;
+        return $this->oauth_authenticate($force_login, $screen_name, 'authorize');
     }
 
     /**
@@ -349,10 +404,9 @@ class Codebird
         if (! function_exists('curl_init')) {
             throw new \Exception('To make API requests, the PHP curl extension must be available.');
         }
-        if (self::$_oauth_consumer_key == null) {
+        if (self::$_oauth_consumer_key === null) {
             throw new \Exception('To obtain a bearer token, the consumer key must be set.');
         }
-        $ch  = false;
         $post_fields = array(
             'grant_type' => 'client_credentials'
         );
@@ -371,10 +425,73 @@ class Codebird
         curl_setopt($ch, CURLOPT_HTTPHEADER, array(
             'Expect:'
         ));
-        $reply = curl_exec($ch);
+        $result = curl_exec($ch);
 
         // certificate validation results
         $validation_result = curl_errno($ch);
+        $this->_validateSslCertificate($validation_result);
+
+        $httpstatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $reply      = $this->_parseApiReply($result);
+        $headers    = $this->_parseApiReply($result, true);
+        $rate       = $this->_getRateLimitInfo($headers);
+        switch ($this->_return_format) {
+            case CODEBIRD_RETURNFORMAT_ARRAY:
+                $reply['httpstatus'] = $httpstatus;
+                $reply['rate']       = $rate;
+                if ($httpstatus === 200) {
+                    self::setBearerToken($reply['access_token']);
+                }
+                break;
+            case CODEBIRD_RETURNFORMAT_JSON:
+                if ($httpstatus === 200) {
+                    $parsed = json_decode($reply);
+                    self::setBearerToken($parsed->access_token);
+                }
+                break;
+            case CODEBIRD_RETURNFORMAT_OBJECT:
+                $reply->httpstatus = $httpstatus;
+                $reply->rate       = $rate;
+                if ($httpstatus === 200) {
+                    self::setBearerToken($reply->access_token);
+                }
+                break;
+        }
+        return $reply;
+    }
+
+    /**
+     * General helpers to avoid duplicate code
+     */
+
+    /**
+     * Extract rate-limiting data from response headers
+     *
+     * @param array $headers The CURL response headers
+     *
+     * @return null|array The rate-limiting information
+     */
+    private function _getRateLimitInfo($headers)
+    {
+        if (! isset($headers['x-rate-limit-limit'])) {
+            return null;
+        }
+        return array(
+            'limit'     => $headers['x-rate-limit-limit'],
+            'remaining' => $headers['x-rate-limit-remaining'],
+            'reset'     => $headers['x-rate-limit-reset']
+        );
+    }
+
+    /**
+     * Check if there were any SSL certificate errors
+     *
+     * @param int $validation_result The curl error number
+     *
+     * @return void
+     */
+    private function _validateSslCertificate($validation_result)
+    {
         if (in_array(
                 $validation_result,
                 array(
@@ -386,32 +503,11 @@ class Codebird
                 )
             )
         ) {
-            throw new \Exception('Error ' . $validation_result . ' while validating the Twitter API certificate.');
+            throw new \Exception(
+                'Error ' . $validation_result
+                . ' while validating the Twitter API certificate.'
+            );
         }
-
-        $httpstatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $reply = $this->_parseApiReply('oauth2/token', $reply);
-        switch ($this->_return_format) {
-            case CODEBIRD_RETURNFORMAT_ARRAY:
-                $reply['httpstatus'] = $httpstatus;
-                if ($httpstatus == 200) {
-                    self::setBearerToken($reply['access_token']);
-                }
-                break;
-            case CODEBIRD_RETURNFORMAT_JSON:
-                if ($httpstatus == 200) {
-                    $parsed = json_decode($reply);
-                    self::setBearerToken($parsed->access_token);
-                }
-                break;
-            case CODEBIRD_RETURNFORMAT_OBJECT:
-                $reply->httpstatus = $httpstatus;
-                if ($httpstatus == 200) {
-                    self::setBearerToken($reply->access_token);
-                }
-                break;
-        }
-        return $reply;
     }
 
     /**
@@ -462,7 +558,7 @@ class Codebird
      */
     private function _sha1($data)
     {
-        if (self::$_oauth_consumer_secret == null) {
+        if (self::$_oauth_consumer_secret === null) {
             throw new \Exception('To generate a hash, the consumer secret must be set.');
         }
         if (!function_exists('hash_hmac')) {
@@ -490,22 +586,23 @@ class Codebird
     /**
      * Generates an OAuth signature
      *
-     * @param string          $httpmethod Usually either 'GET' or 'POST' or 'DELETE'
-     * @param string          $method     The API method to call
-     * @param array  optional $params     The API call parameters, associative
+     * @param string          $httpmethod   Usually either 'GET' or 'POST' or 'DELETE'
+     * @param string          $method       The API method to call
+     * @param array  optional $params       The API call parameters, associative
+     * @param bool   optional append_to_get Whether to append the OAuth params to GET
      *
      * @return string Authorization HTTP header
      */
-    protected function _sign($httpmethod, $method, $params = array())
+    protected function _sign($httpmethod, $method, $params = array(), $append_to_get = false)
     {
-        if (self::$_oauth_consumer_key == null) {
+        if (self::$_oauth_consumer_key === null) {
             throw new \Exception('To generate a signature, the consumer key must be set.');
         }
         $sign_params      = array(
-            'consumer_key' => self::$_oauth_consumer_key,
-            'version' => '1.0',
-            'timestamp' => time(),
-            'nonce' => $this->_nonce(),
+            'consumer_key'     => self::$_oauth_consumer_key,
+            'version'          => '1.0',
+            'timestamp'        => time(),
+            'nonce'            => $this->_nonce(),
             'signature_method' => 'HMAC-SHA1'
         );
         $sign_base_params = array();
@@ -527,13 +624,20 @@ class Codebird
         $sign_base_string = substr($sign_base_string, 0, -1);
         $signature        = $this->_sha1($httpmethod . '&' . $this->_url($method) . '&' . $this->_url($sign_base_string));
 
-        $params = array_merge($oauth_params, array(
-            'oauth_signature' => $signature
-        ));
-        ksort($params);
-        $authorization = 'Authorization: OAuth ';
-        foreach ($params as $key => $value) {
-            $authorization .= $key . '="' . $this->_url($value) . '", ';
+        $params = $append_to_get ? $sign_base_params : $oauth_params;
+        $params['oauth_signature'] = $signature;
+        $keys = $params;
+        ksort($keys);
+        if ($append_to_get) {
+            $authorization = '';
+            foreach ($keys as $key => $value) {
+                $authorization .= $key . '="' . $this->_url($value) . '", ';
+            }
+            return authorization.substring(0, authorization.length - 1);
+        }
+        $authorization = 'OAuth ';
+        foreach ($keys as $key => $value) {
+            $authorization .= $key . "=\"" . $this->_url($value) . "\", ";
         }
         return substr($authorization, 0, -2);
     }
@@ -549,14 +653,16 @@ class Codebird
     protected function _detectMethod($method, $params)
     {
         // multi-HTTP method endpoints
-        switch($method) {
+        switch ($method) {
             case 'account/settings':
+            case 'account/login_verification_enrollment':
+            case 'account/login_verification_request':
                 $method = count($params) > 0 ? $method . '__post' : $method;
                 break;
         }
 
-        $httpmethods         = array();
-        $httpmethods['GET']  = array(
+        $httpmethods = array();
+        $httpmethods['GET'] = array(
             // Timelines
             'statuses/mentions_timeline',
             'statuses/user_timeline',
@@ -567,6 +673,7 @@ class Codebird
             'statuses/retweets/:id',
             'statuses/show/:id',
             'statuses/oembed',
+            'statuses/retweeters/ids',
 
             // Search
             'search/tweets',
@@ -586,6 +693,7 @@ class Codebird
             'friendships/show',
             'friends/list',
             'followers/list',
+            'friendships/lookup',
 
             // Users
             'account/settings',
@@ -598,6 +706,8 @@ class Codebird
             'users/contributees',
             'users/contributors',
             'users/profile_banner',
+            'mutes/users/ids',
+            'mutes/users/list',
 
             // Suggested Users
             'users/suggestions/:slug',
@@ -617,6 +727,7 @@ class Codebird
             'lists/members',
             'lists/show',
             'lists/subscriptions',
+            'lists/ownerships',
 
             // Saved searches
             'saved_searches/list',
@@ -642,7 +753,31 @@ class Codebird
             'help/languages',
             'help/privacy',
             'help/tos',
-            'application/rate_limit_status'
+            'application/rate_limit_status',
+
+            // Tweets
+            'statuses/lookup',
+
+            // Internal
+            'users/recommendations',
+            'account/push_destinations/device',
+            'activity/about_me',
+            'activity/by_friends',
+            'statuses/media_timeline',
+            'timeline/home',
+            'help/experiments',
+            'search/typeahead',
+            'search/universal',
+            'discover/universal',
+            'conversation/show',
+            'statuses/:id/activity/summary',
+            'account/login_verification_enrollment',
+            'account/login_verification_request',
+            'prompts/suggest',
+
+            'beta/timelines/custom/list',
+            'beta/timelines/timeline',
+            'beta/timelines/custom/show'
         );
         $httpmethods['POST'] = array(
             // Tweets
@@ -650,6 +785,7 @@ class Codebird
             'statuses/update',
             'statuses/retweet/:id',
             'statuses/update_with_media',
+            'media/upload',
 
             // Direct Messages
             'direct_messages/destroy',
@@ -671,6 +807,8 @@ class Codebird
             'blocks/destroy',
             'account/update_profile_banner',
             'account/remove_profile_banner',
+            'mutes/users/create',
+            'mutes/users/destroy',
 
             // Favorites
             'favorites/destroy',
@@ -691,9 +829,6 @@ class Codebird
             'saved_searches/create',
             'saved_searches/destroy/:id',
 
-            // Places & Geo
-            'geo/place',
-
             // Spam Reporting
             'users/report_spam',
 
@@ -701,7 +836,19 @@ class Codebird
             'oauth/access_token',
             'oauth/request_token',
             'oauth2/token',
-            'oauth2/invalidate_token'
+            'oauth2/invalidate_token',
+
+            // Internal
+            'direct_messages/read',
+            'account/login_verification_enrollment__post',
+            'push_destinations/enable_login_verification',
+            'account/login_verification_request__post',
+
+            'beta/timelines/custom/create',
+            'beta/timelines/custom/update',
+            'beta/timelines/custom/destroy',
+            'beta/timelines/custom/add',
+            'beta/timelines/custom/remove'
         );
         foreach ($httpmethods as $httpmethod => $methods) {
             if (in_array($method, $methods)) {
@@ -723,6 +870,7 @@ class Codebird
         $multiparts = array(
             // Tweets
             'statuses/update_with_media',
+            'media/upload',
 
             // Users
             'account/update_profile_background_image',
@@ -739,7 +887,7 @@ class Codebird
      * @param string $method  The API method to call
      * @param array  $params  The parameters to send along
      *
-     * @return void
+     * @return null|string
      */
     protected function _buildMultipart($method, $params)
     {
@@ -752,6 +900,7 @@ class Codebird
         $possible_files = array(
             // Tweets
             'statuses/update_with_media' => 'media[]',
+            'media/upload' => 'media',
             // Accounts
             'account/update_profile_background_image' => 'image',
             'account/update_profile_image' => 'image',
@@ -771,7 +920,6 @@ class Codebird
             // is it an array?
             if (is_array($value)) {
                 throw new \Exception('Using URL-encoded parameters is not supported for uploading media.');
-                continue;
             }
             $multipart_request .=
                 '--' . $multipart_border . "\r\n"
@@ -794,7 +942,7 @@ class Codebird
                         readfile($value);
                         $data = ob_get_contents();
                         ob_end_clean();
-                        if (strlen($data) == 0) {
+                        if (strlen($data) === 0) {
                             continue;
                         }
                         $value = $data;
@@ -818,17 +966,62 @@ class Codebird
 
 
     /**
+     * Detects if API call is internal
+     *
+     * @param string $method The API method to call
+     *
+     * @return bool Whether the method is defined in internal API
+     */
+    protected function _detectInternal($method) {
+        $internals = array(
+            'users/recommendations'
+        );
+        return in_array($method, $internals);
+    }
+
+    /**
+     * Detects if API call should use media endpoint
+     *
+     * @param string $method The API method to call
+     *
+     * @return bool Whether the method is defined in media API
+     */
+    protected function _detectMedia($method) {
+        $medias = array(
+            'media/upload'
+        );
+        return in_array($method, $medias);
+    }
+
+    /**
+     * Detects if API call should use old endpoint
+     *
+     * @param string $method The API method to call
+     *
+     * @return bool Whether the method is defined in old API
+     */
+    protected function _detectOld($method) {
+        $olds = array(
+            'account/push_destinations/device'
+        );
+        return in_array($method, $olds);
+    }
+
+    /**
      * Builds the complete API endpoint url
      *
-     * @param string $method           The API method to call
-     * @param string $method_template  The API method template to call
+     * @param string $method The API method to call
      *
      * @return string The URL to send the request to
      */
-    protected function _getEndpoint($method, $method_template)
+    protected function _getEndpoint($method)
     {
-        if (substr($method, 0, 5) == 'oauth') {
+        if (substr($method, 0, 5) === 'oauth') {
             $url = self::$_endpoint_oauth . $method;
+        } elseif ($this->_detectMedia($method)) {
+            $url = self::$_endpoint_media . $method . '.json';
+        } elseif ($this->_detectOld($method)) {
+            $url = self::$_endpoint_old . $method . '.json';
         } else {
             $url = self::$_endpoint . $method . '.json';
         }
@@ -838,64 +1031,74 @@ class Codebird
     /**
      * Calls the API using cURL
      *
-     * @param string          $httpmethod      The HTTP method to use for making the request
-     * @param string          $method          The API method to call
-     * @param string          $method_template The templated API method to call
-     * @param array  optional $params          The parameters to send along
-     * @param bool   optional $multipart       Whether to use multipart/form-data
-     * @param bool   optional $app_only_auth   Whether to use app-only bearer authentication
+     * @param string          $httpmethod    The HTTP method to use for making the request
+     * @param string          $method        The API method to call
+     * @param array  optional $params        The parameters to send along
+     * @param bool   optional $multipart     Whether to use multipart/form-data
+     * @param bool   optional $app_only_auth Whether to use app-only bearer authentication
+     * @param bool   optional $internal      Whether to use internal call
      *
      * @return mixed The API reply, encoded in the set return_format
      */
 
-    protected function _callApi($httpmethod, $method, $method_template, $params = array(), $multipart = false, $app_only_auth = false)
+    protected function _callApi($httpmethod, $method, $params = array(), $multipart = false, $app_only_auth = false, $internal = false)
     {
         if (! function_exists('curl_init')) {
             throw new \Exception('To make API requests, the PHP curl extension must be available.');
         }
-        $url = $this->_getEndpoint($method, $method_template);
-        $ch  = false;
-        if ($httpmethod == 'GET') {
+        if ($internal) {
+            $params['adc']            = 'phone';
+            $params['application_id'] = 333903271;
+        }
+
+        $authorization = null;
+        $url           = $this->_getEndpoint($method);
+        $request_headers = array();
+        if ($httpmethod === 'GET') {
             $url_with_params = $url;
-            if (count($params) > 0) {
+            if (json_encode($params) !== '{}') {
                 $url_with_params .= '?' . http_build_query($params);
             }
-            $authorization = $this->_sign($httpmethod, $url, $params);
+            if (! $app_only_auth) {
+                $authorization = $this->_sign($httpmethod, $url, $params);
+            }
             $ch = curl_init($url_with_params);
         } else {
             if ($multipart) {
-                $authorization = $this->_sign($httpmethod, $url, array());
-                $params        = $this->_buildMultipart($method_template, $params);
+                if (! $app_only_auth) {
+                    $authorization = $this->_sign($httpmethod, $url, array());
+                }
+                $params = $this->_buildMultipart($method, $params);
             } else {
-                $authorization = $this->_sign($httpmethod, $url, $params);
+                if (! $app_only_auth) {
+                    $authorization = $this->_sign($httpmethod, $url, $params);
+                }
                 $params        = http_build_query($params);
             }
             $ch = curl_init($url);
+            if ($multipart) {
+                $first_newline      = strpos($params, "\r\n");
+                $multipart_boundary = substr($params, 2, $first_newline - 2);
+                $request_headers[]  = 'Content-Type: multipart/form-data; boundary='
+                    . $multipart_boundary;
+            }
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
         }
         if ($app_only_auth) {
-            if (self::$_oauth_consumer_key == null) {
-                throw new \Exception('To make an app-only auth API request, the consumer key must be set.');
+            if (self::$_oauth_consumer_key === null
+                && self::$_oauth_bearer_token === null
+            ) {
+                throw new \Exception('To make an app-only auth API request, consumer key or bearer token must be set.');
             }
             // automatically fetch bearer token, if necessary
-            if (self::$_oauth_bearer_token == null) {
+            if (self::$_oauth_bearer_token === null) {
                 $this->oauth2_token();
             }
-            $authorization = 'Authorization: Bearer ' . self::$_oauth_bearer_token;
+            $authorization = 'Bearer ' . self::$_oauth_bearer_token;
         }
-        $request_headers = array();
-        if (isset($authorization)) {
-            $request_headers[] = $authorization;
-            $request_headers[] = 'Expect:';
-        }
-        if ($multipart) {
-            $first_newline      = strpos($params, "\r\n");
-            $multipart_boundary = substr($params, 2, $first_newline - 2);
-            $request_headers[]  = 'Content-Length: ' . strlen($params);
-            $request_headers[]  = 'Content-Type: multipart/form-data; boundary='
-                . $multipart_boundary;
-        }
+        $request_headers[] = 'Authorization: ' . $authorization;
+        $request_headers[] = 'Expect:';
 
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 0);
@@ -905,30 +1108,31 @@ class Codebird
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($ch, CURLOPT_CAINFO, __DIR__ . '/cacert.pem');
 
-        $reply = curl_exec($ch);
+        if (isset($this->_timeout)) {
+            curl_setopt($ch, CURLOPT_TIMEOUT_MS, $this->_timeout);
+        }
+
+        if (isset($this->_connectionTimeout)) {
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, $this->_connectionTimeout);
+        }
+
+        $result = curl_exec($ch);
 
         // certificate validation results
         $validation_result = curl_errno($ch);
-        if (in_array(
-                $validation_result,
-                array(
-                    CURLE_SSL_CERTPROBLEM,
-                    CURLE_SSL_CACERT,
-                    CURLE_SSL_CACERT_BADFILE,
-                    CURLE_SSL_CRL_BADFILE,
-                    CURLE_SSL_ISSUER_ERROR
-                )
-            )
-        ) {
-            throw new \Exception('Error ' . $validation_result . ' while validating the Twitter API certificate.');
-        }
+        $this->_validateSslCertificate($validation_result);
 
         $httpstatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $reply = $this->_parseApiReply($method_template, $reply);
-        if ($this->_return_format == CODEBIRD_RETURNFORMAT_OBJECT) {
+        $reply      = $this->_parseApiReply($result);
+        $headers    = $this->_parseApiReply($result, true);
+        $rate       = $this->_getRateLimitInfo($headers);
+
+        if ($this->_return_format === CODEBIRD_RETURNFORMAT_OBJECT) {
             $reply->httpstatus = $httpstatus;
-        } elseif ($this->_return_format == CODEBIRD_RETURNFORMAT_ARRAY) {
+            $reply->rate       = $rate;
+        } elseif ($this->_return_format === CODEBIRD_RETURNFORMAT_ARRAY) {
             $reply['httpstatus'] = $httpstatus;
+            $reply['rate']       = $rate;
         }
         return $reply;
     }
@@ -936,19 +1140,22 @@ class Codebird
     /**
      * Parses the API reply to encode it in the set return_format
      *
-     * @param string $method The method that has been called
-     * @param string $reply  The actual reply, JSON-encoded or URL-encoded
+     * @param string $reply       The actual reply, JSON-encoded or URL-encoded
+     * @param bool   $get_headers If to return the headers instead of body
      *
      * @return array|object The parsed reply
      */
-    protected function _parseApiReply($method, $reply)
+    protected function _parseApiReply($reply, $get_headers = false)
     {
         // split headers and body
         $headers = array();
         $reply = explode("\r\n\r\n", $reply, 4);
 
         // check if using proxy
-        if (substr($reply[0], 0, 35) === 'HTTP/1.1 200 Connection Established') {
+        $proxy_strings = array();
+        $proxy_strings[strtolower('HTTP/1.0 200 Connection Established')] = true;
+        $proxy_strings[strtolower('HTTP/1.1 200 Connection Established')] = true;
+        if (array_key_exists(strtolower(substr($reply[0], 0, 35)), $proxy_strings)) {
             array_shift($reply);
         } elseif (count($reply) > 2) {
             $headers = array_shift($reply);
@@ -968,14 +1175,17 @@ class Codebird
             }
             $headers[$key] = $value;
         }
+        if ($get_headers) {
+            return $headers;
+        }
         if (count($reply) > 1) {
             $reply = $reply[1];
         } else {
             $reply = '';
         }
 
-        $need_array = $this->_return_format == CODEBIRD_RETURNFORMAT_ARRAY;
-        if ($reply == '[]') {
+        $need_array = $this->_return_format === CODEBIRD_RETURNFORMAT_ARRAY;
+        if ($reply === '[]') {
             switch ($this->_return_format) {
                 case CODEBIRD_RETURNFORMAT_ARRAY:
                     return array();
@@ -985,7 +1195,6 @@ class Codebird
                     return new \stdClass;
             }
         }
-        $parsed = array();
         if (! $parsed = json_decode($reply, $need_array)) {
             if ($reply) {
                 if (stripos($reply, '<' . '?xml version="1.0" encoding="UTF-8"?' . '>') === 0) {
