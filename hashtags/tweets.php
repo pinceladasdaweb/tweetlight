@@ -30,6 +30,7 @@ class Tweets {
 
         unset($data['search_metadata']);
         unset($data['httpstatus']);
+        unset($data['rate']);
 
         // Output result in JSON:
         return json_encode($data);
