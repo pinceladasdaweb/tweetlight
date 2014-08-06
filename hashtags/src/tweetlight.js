@@ -2,8 +2,8 @@
 * Tweetlight
 * Display all tweets with a certain hashtag with pure JavaScript and PHP OAuth Library
 * Example and documentation at: https://github.com/pinceladasdaweb/tweetlight
-* Copyright (c) 2013
-* Version: 3.0.0 (17-DEZ-2013)
+* Copyright (c) 2014
+* Version: 3.0.1 (Latest build: Aug 06 2014)
 * Licensed under the MIT license: http://www.opensource.org/licenses/mit-license.php
 * Requires: Twitter API Authentication
 ---------------*/
@@ -16,8 +16,8 @@ var Browser = (function () {
 
 var Tweetlight = {
     init: function (config) {
-        this.url = './tweets.php?q=' + encodeURIComponent(config.query) + '&count=' + config.count;
-        this.container = config.container;
+        this.url        = './tweets.php?q=' + encodeURIComponent(config.query) + '&count=' + config.count;
+        this.container  = config.container;
         this.onComplete = config.onComplete || function () {};
         this.fetch();
     },
@@ -51,11 +51,10 @@ var Tweetlight = {
         var self = this;
 
         self.getJSON({url: self.url}, function (data) {
-            var tweets = JSON.parse(data),
-                tweet = tweets.statuses;
-
-            var timeline = document.querySelector(self.container),
-                content = '';
+            var tweets   = JSON.parse(data),
+                tweet    = tweets.statuses,
+                timeline = document.querySelector(self.container),
+                content  = '';
 
             self.loop(tweet, function (res) {
                 content += '<li><span class="tweet"><a href="https://twitter.com/'+res.user.screen_name+'">'+res.user.screen_name+'</a>: '+self.twitterLinks(res.text)+'</span><span class="created">'+self.prettyDate(res.created_at)+'</span></li>';
