@@ -1,8 +1,19 @@
 {
   "name": "Tweetlight",
-  "version": "3.0.0",
+  "version": "3.0.1",
+  "private": true,
+  "description": "Display your latest tweets with pure JavaScript and PHP OAuth Library",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:pinceladasdaweb/tweetlight.git"
+  },
+  "author": "Pedro Rogerio",
+  "license": "MIT",
   "devDependencies": {
-    "grunt": "~0.4.2",
-    "grunt-contrib-uglify": "~0.2.7"
+    "grunt": "~0.4.5",
+    "grunt-contrib-uglify": "~0.5.1"
   }
 }
