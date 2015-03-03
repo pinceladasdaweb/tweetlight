@@ -1,121 +1,150 @@
-/*---------------
-* Tweetlight
-* Display your latest tweets with pure JavaScript and PHP OAuth Library
-* Example and documentation at: https://github.com/pinceladasdaweb/tweetlight
-* Copyright (c) 2014
-* Version: 3.0.1 (Latest build: Aug 06 2014)
-* Licensed under the MIT license: http://www.opensource.org/licenses/mit-license.php
-* Requires: Twitter API Authentication
----------------*/
-var Browser = (function () {
-    var agent = navigator.userAgent;
-    return {
-        ie: agent.match(/MSIE\s([^;]*)/)
-    };
-}());
+/*jslint browser: true*/
+/*global define, module, exports*/
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define('tweetlight', factory);
+    } else if (typeof exports === 'object') {
+        module.exports = factory();
+    } else {
+        root.Tweetlight = factory();
+    }
+}(this, function () {
+    "use strict";
 
-var Tweetlight = {
-    init: function (config) {
-        this.url        = './tweets.php?username=' + config.username + '&count=' + config.count;
-        this.container  = config.container;
-        this.onComplete = config.onComplete || function () {};
+    var Tweetlight = function (options) {
+        if (!this || !(this instanceof Tweetlight)) {
+            return new Tweetlight(options);
+        }
+
+        if (typeof options === 'string') {
+            options = { key : options };
+        }
+
+        this.username   = options.username;
+        this.hashtag    = options.hashtag;
+        this.container  = options.container;
+        this.counter    = options.counter;
+        this.endpoint   = '../request.php';
+        this.onComplete = options.onComplete || function () {};
+
         this.fetch();
-    },
-    xhr: function () {
-        return new XMLHttpRequest();
-    },
-    getJSON: function (options, callback) {
-        var self = this;
+    };
 
-        var xhttp    = self.xhr();
-        options.url  = options.url || location.href;
-        options.data = options.data || null;
-        callback     = callback || function () {};
-        xhttp.open('GET', options.url, true);
-        xhttp.onreadystatechange = function () {
-            if (xhttp.status === 200 && xhttp.readyState === 4) {
-                callback(xhttp.responseText);
+    Tweetlight.init = function (options) {
+        return new Tweetlight(options);
+    };
+
+    Tweetlight.prototype = {
+        fetch: function () {
+            var type     = this.hashtag ? 'hashtag=' + encodeURIComponent(this.hashtag) : 'username=' + this.username,
+                counter  = this.counter ? '&count=' + this.counter : '',
+                endpoint = this.endpoint + '?' + type + counter;
+
+            this.getJSON(endpoint, this.loadTweets);
+        },
+        getJSON: function (path, callback) {
+            var xhttp = new XMLHttpRequest(),
+                self  = this;
+
+            xhttp.open('GET', path, true);
+            xhttp.onreadystatechange = function () {
+                if (this.readyState === 4) {
+                    if (this.status >= 200 && this.status < 400) {
+                        var json = JSON.parse(this.responseText);
+                        callback.call(self, json);
+                    } else {
+                        throw new Error(this.status + " - " + this.statusText);
+                    }
+                }
+            };
+            xhttp.send();
+            xhttp = null;
+        },
+        loadTweets: function (tweets) {
+            var apiStatus = tweets.httpstatus;
+
+            if (apiStatus === 200) {
+                if (tweets.statuses) {
+                    tweets = tweets.statuses;
+                }
+
+                this.displayTweets(tweets);
+
+                this.onComplete();
+            } else {
+                this.displayError(tweets);
             }
-        }
-        xhttp.send(options.data);
-    },
-    loop: function (els, callback) {
-        var i = 0, max = els.length;
+        },
+        displayTweets: function (tweets) {
+            var timeline = document.querySelector(this.container), content = '', i;
 
-        while (i < max) {
-            callback(els[i], i);
-            i += 1;
-        }
-    },
-    fetch: function () {
-        var self = this;
-
-        self.getJSON({url: self.url}, function (data) {
-            var tweets   = JSON.parse(data),
-                timeline = document.querySelector(self.container),
-                content  = '';
-
-            if (!tweets[0].created) {
-                timeline.innerHTML = '<li class="error">Houston, we have a problem...</li>';
-                return
+            for (i in tweets) {
+                if (tweets.hasOwnProperty(i)) {
+                    if (tweets[i].text) {
+                        content += '<li><span class="tweet">' + this.twitterLinks(tweets[i].text) + '</span><span class="created">' + this.prettyDate(tweets[i].created_at) + '</span></li>';
+                    }
+                }
             }
-
-            self.loop(tweets, function (tweet) {
-                content += '<li><span class="tweet">'+self.twitterLinks(tweet.text)+'</span><span class="created">'+self.prettyDate(tweet.created)+'</span></li>';
-            });
 
             timeline.innerHTML = content;
+        },
+        displayError: function (tweets) {
+            var timeline = document.querySelector(this.container);
 
-            self.onComplete();
-        });
+            timeline.innerHTML = '<li class="error">' + tweets.errors.message + '</li>';
+        },
+        prettyDate: function (dateString) {
+            var rightNow = new Date(),
+                then     = new Date(dateString);
 
-    },
-    prettyDate: function (a) {
-        var b = new Date();
-        var c = new Date(a);
-        if (Browser.ie) {
-            c = Date.parse(a.replace(/( \+)/, ' UTC$1'))
+            if (navigator.userAgent.indexOf('MSIE') !== -1 || navigator.appVersion.indexOf('Trident/') > 0) {
+                then = Date.parse(dateString.replace(/( \+)/, ' UTC$1'));
+            }
+
+            var diff   = rightNow - then,
+                second = 1000,
+                minute = second * 60,
+                hour   = minute * 60,
+                day    = hour * 24,
+                week   = day * 7;
+
+            if (isNaN(diff) || diff < 0) {
+                return "";
+            }
+            if (diff < second * 2) {
+                return "just now";
+            }
+            if (diff < minute) {
+                return Math.floor(diff / second) + " seconds ago";
+            }
+            if (diff < minute * 2) {
+                return "1 minute ago";
+            }
+            if (diff < hour) {
+                return Math.floor(diff / minute) + " minutes ago";
+            }
+            if (diff < hour * 2) {
+                return "1 hour ago";
+            }
+            if (diff < day) {
+                return Math.floor(diff / hour) + " hours ago";
+            }
+            if (diff > day && diff < day * 2) {
+                return "yesterday";
+            }
+            if (diff < day * 365) {
+                return Math.floor(diff / day) + " days ago";
+            }
+
+            return "over a year ago";
+        },
+        twitterLinks: function (text) {
+            text = text.replace(/(https?:\/\/)([\w\-:;?&=+.%#\/]+)/gi, '<a href="$1$2">$2</a>')
+                .replace(/(^|\W)@(\w+)/g, '$1<a href="https://twitter.com/$2">@$2</a>')
+                .replace(/(^|\W)#(\w+)/g, '$1<a href="https://twitter.com/search?q=%23$2">#$2</a>');
+            return text;
         }
-        var d = b - c;
-        var e = 1000,
-            minute = e * 60,
-            hour = minute * 60,
-            day = hour * 24,
-            week = day * 7;
-        if (isNaN(d) || d < 0) {
-            return ""
-        }
-        if (d < e * 7) {
-            return "just now"
-        }
-        if (d < minute) {
-            return Math.floor(d / e) + " seconds ago"
-        }
-        if (d < minute * 2) {
-            return "1 minute ago"
-        }
-        if (d < hour) {
-            return Math.floor(d / minute) + " minutes ago"
-        }
-        if (d < hour * 2) {
-            return "1 hour ago"
-        }
-        if (d < day) {
-            return Math.floor(d / hour) + " hours ago"
-        }
-        if (d > day && d < day * 2) {
-            return "yesterday"
-        }
-        if (d < day * 365) {
-            return Math.floor(d / day) + " days ago"
-        } else {
-            return "over a year ago"
-        }
-    },
-    twitterLinks: function (text) {
-        text = text.replace(/(https?:\/\/)([\w\-:;?&=+.%#\/]+)/gi, '<a href="$1$2">$2</a>')
-        .replace(/(^|\W)@(\w+)/g, '$1<a href="https://twitter.com/$2">@$2</a>')
-        .replace(/(^|\W)#(\w+)/g, '$1<a href="https://twitter.com/search?q=%23$2">#$2</a>');
-        return text
-    }
-}
+    };
+
+    return Tweetlight;
+}));
