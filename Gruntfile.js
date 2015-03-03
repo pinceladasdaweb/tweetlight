@@ -1,23 +1,32 @@
 module.exports = function (grunt) {
-    pkg: grunt.file.readJSON('package.json'),
+    "use strict";
+
+    var pkg  = grunt.file.readJSON("package.json");
+    var date = new Date();
+
     grunt.initConfig({
+        meta: {
+            banner: '/*! ' + pkg.name + ' ' + pkg.version + ' | (c) ' + date.getFullYear() + ' ' + pkg.author + ' | ' + pkg.licenses[0].type + ' License */'
+        },
         uglify: {
             options: {
-                preserveComments: 'all'
+                banner: '<%= meta.banner %>\n'
             },
-            timeline: {
+            target: {
                 files: {
-                    'user/src/tweetlight.min.js': ['user/src/tweetlight.js']
+                    'build/tweetlight.min.js': ['src/tweetlight.js']
                 }
-            },
-            hashtag: {
-                files: {
-                    'hashtags/src/tweetlight.min.js': ['hashtags/src/tweetlight.js']
-                }
-            },
+            }
+        },
+        watch: {
+            js: {
+                files: ['src/tweetlight.js'],
+                tasks: ['uglify']
+            }
         }
     });
 
+    grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-contrib-uglify');
 
     grunt.registerTask('default', [ 'uglify' ]);
