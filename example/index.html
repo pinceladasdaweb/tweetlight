@@ -1,24 +1,43 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<title>Tweetlight</title>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<link rel="stylesheet" type="text/css" href="css/style.css" />
+    <title>Tweetlight</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="css/style.css" rel="stylesheet" type="text/css">
+    <link href="http://fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet" type="text/css">
 </head>
 <body>
 
-<div id="twitter">
-	<h2><span>Twitter</span></h2>
-	<ul id="tweets"></ul>
-</div>
+    <a class="badge" href="https://github.com/pinceladasdaweb/tweetlight"><img style="position:absolute; top:0; right:0; border:0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png" alt="Fork me on GitHub"></a>
 
-<script type="text/javascript" src="src/tweetlight.min.js"></script>
-<script type="text/javascript">
-	Tweetlight.init({
-		username: 'pinceladasdaweb',
-		container: '#tweets',
-		count: 4
-	});
-</script>
+    <h1>Display Profile Tweets</h1>
+    <div class="stream">
+        <h2><span>Twitter</span></h2>
+        <ul class="timeline"></ul>
+    </div>
+
+    <h1>Display HashTags</h1>
+    <div class="stream">
+        <h2><span>Twitter</span></h2>
+        <ul class="hashtags"></ul>
+    </div>
+
+    <script type="text/javascript" src="../build/tweetlight.min.js"></script>
+    <script type="text/javascript">
+        (function(window, document, undefined) {
+            Tweetlight.init({
+                username: 'pinceladasdaweb',
+                container: '.timeline',
+                counter: 5
+            });
+
+            Tweetlight.init({
+                hashtag: '#html5',
+                container: '.hashtags',
+                counter: 5
+            });
+        }(window, document));
+    </script>
 </body>
 </html>
