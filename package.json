@@ -1,19 +1,23 @@
 {
-  "name": "Tweetlight",
-  "version": "3.0.2",
-  "private": true,
-  "description": "Display your latest tweets with pure JavaScript and PHP OAuth Library",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:pinceladasdaweb/tweetlight.git"
-  },
-  "author": "Pedro Rogerio",
-  "license": "MIT",
-  "devDependencies": {
-    "grunt": "~0.4.5",
-    "grunt-contrib-uglify": "~0.7.0"
-  }
+    "name": "tweetlight",
+    "description": "Display your latest tweets with pure JavaScript and PHP OAuth Library",
+    "version": "4.0.0",
+    "private": true,
+    "author": "Pedro Rogério",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "devDependencies": {
+        "grunt": "~0.4.5",
+        "grunt-contrib-watch": "~0.6.1",
+        "grunt-contrib-uglify": "~0.8.0"
+    },
+    "repository": "https://github.com/pinceladasdaweb/tweetlight",
+    "bugs": {
+        "url": "https://github.com/pinceladasdaweb/tweetlight/issues"
+    },
+    "licenses": [{
+        "type": "MIT",
+        "url": "http://opensource.org/licenses/MIT"
+    }]
 }
