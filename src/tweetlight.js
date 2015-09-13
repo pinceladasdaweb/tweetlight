@@ -1,6 +1,8 @@
 /*jslint browser: true*/
 /*global define, module, exports*/
 (function (root, factory) {
+    "use strict";
+
     if (typeof define === 'function' && define.amd) {
         define('tweetlight', factory);
     } else if (typeof exports === 'object') {
@@ -95,18 +97,24 @@
         },
         prettyDate: function (dateString) {
             var rightNow = new Date(),
-                then     = new Date(dateString);
+                then     = new Date(dateString),
+                diff,
+                second,
+                minute,
+                hour,
+                day,
+                week;
 
             if (navigator.userAgent.indexOf('MSIE') !== -1 || navigator.appVersion.indexOf('Trident/') > 0) {
                 then = Date.parse(dateString.replace(/( \+)/, ' UTC$1'));
             }
 
-            var diff   = rightNow - then,
-                second = 1000,
-                minute = second * 60,
-                hour   = minute * 60,
-                day    = hour * 24,
-                week   = day * 7;
+            diff   = rightNow - then;
+            second = 1000;
+            minute = second * 60;
+            hour   = minute * 60;
+            day    = hour * 24;
+            week   = day * 7;
 
             if (isNaN(diff) || diff < 0) {
                 return "";
