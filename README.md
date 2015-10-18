@@ -24,6 +24,7 @@
 Tweetlight({
     username: 'pinceladasdaweb',    // Twitter username
     container: '.timeline',         // domNode to attach to
+    showImageProfile: true,         // Display image profile, default is false
     counter: 5,                     // Number of tweets to display
     onComplete: function() {
         console.log('Awesome APP'); // Callback to execute after fetch tweets. Not required, use if necessary.
@@ -37,6 +38,7 @@ Tweetlight({
 Tweetlight({
     hashtag: '#html5',              // Twitter hashtag
     container: '.hashtags',         // domNode to attach to
+    showImageProfile: true,         // Display image profile, default is false
     counter: 5,                     // Number of tweets to display
     onComplete: function() {
         console.log('Awesome APP'); // Callback to execute after fetch tweets. Not required, use if necessary.
@@ -51,6 +53,7 @@ require(["/path/to/tweetlight.min"], function(Tweetlight) {
     Tweetlight({
         username: 'pinceladasdaweb',
         container: '.timeline',
+        showImageProfile: true,
         counter: 5
     });
 });
