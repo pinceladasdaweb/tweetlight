@@ -18,12 +18,13 @@
             return new Tweetlight(options);
         }
 
-        this.username   = options.username;
-        this.hashtag    = options.hashtag;
-        this.container  = options.container;
-        this.counter    = options.counter;
-        this.endpoint   = '../request.php';
-        this.onComplete = options.onComplete || function () {};
+        this.username         = options.username;
+        this.hashtag          = options.hashtag;
+        this.container        = options.container;
+        this.counter          = options.counter;
+        this.showImageProfile = options.showImageProfile || false;
+        this.endpoint         = '../request.php';
+        this.onComplete       = options.onComplete || function () {};
 
         this.fetch();
     };
@@ -70,12 +71,14 @@
             }
         },
         displayTweets: function (tweets) {
-            var timeline = document.querySelector(this.container), content = '', i;
+            var timeline = document.querySelector(this.container), content = '', imageProfile, i;
 
             for (i in tweets) {
                 if (tweets.hasOwnProperty(i)) {
                     if (tweets[i].text) {
-                        content += '<li><span class="tweet">' + this.twitterLinks(tweets[i].text) + '</span><span class="created">' + this.prettyDate(tweets[i].created_at) + '</span></li>';
+                        imageProfile = this.showImageProfile ? '<img class="image-profile" src="' + tweets[i].user.profile_image_url_https + '" alt="' + tweets[i].user.name + '">' : '';
+
+                        content += '<li>' + imageProfile + '<span class="tweet">' + this.twitterLinks(tweets[i].text) + '</span><span class="created">' + this.prettyDate(tweets[i].created_at) + '</span></li>';
                     }
                 }
             }
@@ -85,7 +88,7 @@
         displayError: function (tweets) {
             var timeline = document.querySelector(this.container);
 
-            timeline.innerHTML = '<li class="error">' + tweets.errors.message + '</li>';
+            timeline.innerHTML = '<li class="error">' + tweets.errors[0].message + '</li>';
         },
         prettyDate: function (dateString) {
             var rightNow = new Date(),
