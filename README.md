@@ -21,7 +21,7 @@
 3.1 - For display a user timeline use:
 
 ```javascript
-Tweetlight.init({
+Tweetlight({
     username: 'pinceladasdaweb',    // Twitter username
     container: '.timeline',         // domNode to attach to
     counter: 5,                     // Number of tweets to display
@@ -34,7 +34,7 @@ Tweetlight.init({
 3.2 - For display hashtags use:
 
 ```javascript
-Tweetlight.init({
+Tweetlight({
     hashtag: '#html5',              // Twitter hashtag
     container: '.hashtags',         // domNode to attach to
     counter: 5,                     // Number of tweets to display
@@ -48,7 +48,7 @@ Tweetlight.init({
 
 ```javascript
 require(["/path/to/tweetlight.min"], function(Tweetlight) {
-    Tweetlight.init({
+    Tweetlight({
         username: 'pinceladasdaweb',
         container: '.timeline',
         counter: 5
