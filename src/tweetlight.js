@@ -1,4 +1,4 @@
-/*jslint browser: true*/
+/*jslint browser: true, debug:true*/
 /*global define, module, exports*/
 (function (root, factory) {
     "use strict";
@@ -18,10 +18,6 @@
             return new Tweetlight(options);
         }
 
-        if (typeof options === 'string') {
-            options = { key : options };
-        }
-
         this.username   = options.username;
         this.hashtag    = options.hashtag;
         this.container  = options.container;
@@ -30,10 +26,6 @@
         this.onComplete = options.onComplete || function () {};
 
         this.fetch();
-    };
-
-    Tweetlight.init = function (options) {
-        return new Tweetlight(options);
     };
 
     Tweetlight.prototype = {
