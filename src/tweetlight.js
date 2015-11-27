@@ -24,7 +24,7 @@
         this.counter          = options.counter;
         this.showImageProfile = options.showImageProfile || false;
         this.endpoint         = '../request.php';
-        this.onComplete       = options.onComplete || function () {};
+        this.onComplete       = options.onComplete || undefined;
 
         this.fetch();
     };
@@ -44,7 +44,7 @@
             xhttp.open('GET', path, true);
             xhttp.onreadystatechange = function () {
                 if (this.readyState === 4) {
-                    if (this.status >= 200 && this.status < 400) {
+                    if ((this.status >= 200 && this.status < 300) || this.status === 304) {
                         var json = JSON.parse(this.responseText);
                         callback.call(self, json);
                     } else {
@@ -65,7 +65,7 @@
 
                 this.displayTweets(tweets);
 
-                this.onComplete();
+                typeof this.onComplete === 'function' && this.onComplete.call();
             } else {
                 this.displayError(tweets);
             }
