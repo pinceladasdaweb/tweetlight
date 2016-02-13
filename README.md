@@ -31,15 +31,15 @@ Tweetlight is a [Vanilla JS](http://vanilla-js.com/) plugin with no dependencies
 And initialise it. For display a user timeline use:
 
 ```javascript
-    Tweetlight({
-        username: 'pinceladasdaweb',    // Twitter username
-        container: '.timeline',         // domNode to attach to
-        showImageProfile: true,         // Display image profile, default is false
-        counter: 5,                     // Number of tweets to display
-        onComplete: function() {
-            console.log('Awesome APP'); // Callback to execute after fetch tweets. Not required, use if necessary.
-        }
-    });
+Tweetlight({
+    username: 'pinceladasdaweb',    // Twitter username
+    container: '.timeline',         // domNode to attach to
+    showImageProfile: true,         // Display image profile, default is false
+    counter: 5,                     // Number of tweets to display
+    onComplete: function() {
+        console.log('Awesome APP'); // Callback to execute after fetch tweets. Not required, use if necessary.
+    }
+});
 ```
 
 For display hashtags use:
