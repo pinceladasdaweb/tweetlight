@@ -1,38 +1,48 @@
-# [Tweetlight](http://www.pinceladasdaweb.com.br/blog/uploads/tweetlight/)
+# Tweetlight
 
 > Display your latest tweets with pure JavaScript and PHP OAuth Library.
 
-## How to Configure
+## Demo
 
-1 - In your HTML file where you want the tweets appear, insert a `<ul>` tag with an id or class, to be used by JavaScript:
+View [demo here](http://www.pinceladasdaweb.com.br/blog/uploads/tweetlight/)
 
-```html
-<ul class="timeline"></ul>
+## Requirements
+
+* PHP 5.4.0 or higher
+* OpenSSL extension
+
+## Getting Started
+
+```bash
+# Get the latest snapshot
+$ git clone git@github.com:pinceladasdaweb/tweetlight.git
 ```
 
-2 - Paste right before your page's closing `</body>` tag:
+## How to use?
+
+### Javascript initialization
+
+Tweetlight is a [Vanilla JS](http://vanilla-js.com/) plugin with no dependencies. Include the [`tweetlight.min.js`](build/tweetlight.min.js) before your ```</body>``` tag:
 
 ```html
-<script type="text/javascript" src="path/to/tweetlight.min.js"></script>
+<script src="path/to/tweetlight.min.js"></script>
 ```
 
-3 - From within a script tag or a JS file:
-
-3.1 - For display a user timeline use:
+And initialise it. For display a user timeline use:
 
 ```javascript
-Tweetlight({
-    username: 'pinceladasdaweb',    // Twitter username
-    container: '.timeline',         // domNode to attach to
-    showImageProfile: true,         // Display image profile, default is false
-    counter: 5,                     // Number of tweets to display
-    onComplete: function() {
-        console.log('Awesome APP'); // Callback to execute after fetch tweets. Not required, use if necessary.
-    }
-});
+    Tweetlight({
+        username: 'pinceladasdaweb',    // Twitter username
+        container: '.timeline',         // domNode to attach to
+        showImageProfile: true,         // Display image profile, default is false
+        counter: 5,                     // Number of tweets to display
+        onComplete: function() {
+            console.log('Awesome APP'); // Callback to execute after fetch tweets. Not required, use if necessary.
+        }
+    });
 ```
 
-3.2 - For display hashtags use:
+For display hashtags use:
 
 ```javascript
 Tweetlight({
@@ -46,31 +56,46 @@ Tweetlight({
 });
 ```
 
-3.3 - You can also load the script via AMD:
+You can also load the plugin via AMD (require.js):
 
-```javascript
-require(["/path/to/tweetlight.min"], function(Tweetlight) {
+```html
+<script>
+require(["path/to/tweetlight.min.js"], function(Tweetlight) {
     Tweetlight({
-        username: 'pinceladasdaweb',
-        container: '.timeline',
-        showImageProfile: true,
-        counter: 5
+        username: 'pinceladasdaweb',    // Twitter username
+        container: '.timeline',         // domNode to attach to
+        showImageProfile: true,         // Display image profile, default is false
+        counter: 5,                     // Number of tweets to display
+        onComplete: function() {
+            console.log('Awesome APP'); // Callback to execute after fetch tweets. Not required, use if necessary.
+        }
     });
 });
+</script>
 ```
 
-4 - In the config.php [`config.php`](api/config.php) file, complete the [Twitter OAuth settings](https://dev.twitter.com/docs/auth/oauth/faq)
+### HTML
+
+In your HTML file where you want the tweets appear, insert a `<ul>` tag with an id or class, to be used by JavaScript:
+
+```html
+<ul class="timeline"></ul>
+```
+
+### PHP
+
+In the config.php [`config.php`](vendor/Tweets/config.php) file, complete the [Twitter OAuth settings](https://dev.twitter.com/docs/auth/oauth/faq)
 
 ```php
-$CONSUMER_KEY        = '';
-$CONSUMER_SECRET     = '';
-$ACCESS_TOKEN        = '';
-$ACCESS_TOKEN_SECRET = '';
+define('CONSUMER_KEY', '');
+define('CONSUMER_SECRET', '');
+define('ACCESS_TOKEN', '');
+define('ACCESS_TOKEN_SECRET', '');
 ```
 
 ## Important Note
 
-It is mandatory to file cacert.pem be on the same level/directory that codebird.php file because Twitter requires [secure connections in their API](https://dev.twitter.com/discussions/24239).
+It is mandatory to file cacert.pem be on the same level/directory that Codebird.class.php file because Twitter requires [secure connections in their API](https://dev.twitter.com/discussions/24239).
 
 ## Browser support
 
