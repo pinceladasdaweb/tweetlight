@@ -6,7 +6,7 @@ module.exports = function (grunt) {
 
     grunt.initConfig({
         meta: {
-            banner: '/*! ' + pkg.name + ' ' + pkg.version + ' | (c) ' + date.getFullYear() + ' ' + pkg.author + ' | ' + pkg.licenses[0].type + ' License */'
+            banner: '/*! ' + pkg.name + ' - ' + pkg.description + ' v' + pkg.version + ' | (c) ' + date.getFullYear() + ' ' + pkg.author + ' | ' + pkg.licenses[0].type + ' License */'
         },
         uglify: {
             options: {
