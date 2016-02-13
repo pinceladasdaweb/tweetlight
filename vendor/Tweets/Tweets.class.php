@@ -1,15 +1,16 @@
 <?php
-class Tweets {
-    public function __construct($CONSUMER_KEY, $CONSUMER_SECRET, $ACCESS_TOKEN, $ACCESS_TOKEN_SECRET) {
-        $this->_consumer_key        = $CONSUMER_KEY;
-        $this->_consumer_secret     = $CONSUMER_SECRET;
-        $this->_access_token        = $ACCESS_TOKEN;
-        $this->_access_token_secret = $ACCESS_TOKEN_SECRET;
-    }
+namespace Tweets;
+
+class Tweets extends \Codebird\Codebird
+{
+    private $_consumer_key        = CONSUMER_KEY;
+    private $_consumer_secret     = CONSUMER_SECRET;
+    private $_access_token        = ACCESS_TOKEN;
+    private $_access_token_secret = ACCESS_TOKEN_SECRET;
 
     public function user_timeline() {
-        \Codebird\Codebird::setConsumerKey($this->_consumer_key, $this->_consumer_secret);
-        $cb = \Codebird\Codebird::getInstance();
+        parent::setConsumerKey($this->_consumer_key, $this->_consumer_secret);
+        $cb = parent::getInstance();
         $cb->setToken($this->_access_token, $this->_access_token_secret);
 
         $params = array(
@@ -23,8 +24,8 @@ class Tweets {
     }
 
     public function hashtag() {
-        \Codebird\Codebird::setConsumerKey($this->_consumer_key, $this->_consumer_secret);
-        $cb = \Codebird\Codebird::getInstance();
+        parent::setConsumerKey($this->_consumer_key, $this->_consumer_secret);
+        $cb = parent::getInstance();
         $cb->setToken($this->_access_token, $this->_access_token_secret);
 
         $params = array(
