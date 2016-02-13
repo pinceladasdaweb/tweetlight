@@ -1,10 +1,16 @@
 <?php
-require_once ('api/codebird/codebird.php');
-require_once ('api/Tweets.php');
-require_once ('api/config.php');
+require_once './vendor/autoload.php';
+require_once './vendor/Tweets/config.php';
 
-$tweets = new Tweets($CONSUMER_KEY, $CONSUMER_SECRET, $ACCESS_TOKEN, $ACCESS_TOKEN_SECRET);
+$codebirdLoader = new SplClassLoader('Codebird', 'vendor');
+$tweetsLoader   = new SplClassLoader('Tweets', 'vendor');
 
+$codebirdLoader->register();
+$tweetsLoader->register();
+
+use Tweets\Tweets;
+
+$tweets   = new Tweets();
 $timeline = $tweets->user_timeline();
 $hashtag  = $tweets->hashtag();
 
