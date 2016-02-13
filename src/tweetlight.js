@@ -1,5 +1,5 @@
 /*jslint browser: true, debug:true*/
-/*global define, module, exports*/
+/*global define, module, exports, console*/
 (function (root, factory) {
     "use strict";
 
@@ -13,42 +13,61 @@
 }(this, function () {
     "use strict";
 
+    if (!(Function.prototype.hasOwnProperty('bind'))) {
+        Function.prototype.bind = function () {
+            var fn = this, context = arguments[0], args = Array.prototype.slice.call(arguments, 1);
+            return function () {
+                return fn.apply(context, args.concat(Array.prototype.slice.call(arguments)));
+            };
+        };
+    }
+
     var Tweetlight = function (options) {
         if (!this || !(this instanceof Tweetlight)) {
             return new Tweetlight(options);
         }
 
+        if (!options) {
+            console.log('%c Don\'t initialize the plugin without setting a username or without setting an html element to attach tweets', 'background: red; color: white');
+            return;
+        }
+
+        this.endpoint         = '../request.php';
         this.username         = options.username;
         this.hashtag          = options.hashtag;
         this.container        = options.container;
         this.counter          = options.counter;
         this.showImageProfile = options.showImageProfile || false;
-        this.endpoint         = '../request.php';
-        this.onComplete       = options.onComplete || undefined;
+        this.onComplete       = options.onComplete       || undefined;
 
         this.fetch();
     };
 
     Tweetlight.prototype = {
+        inject: function (target, html) {
+            target.insertAdjacentHTML('beforeend', html);
+        },
         fetch: function () {
             var type     = this.hashtag ? 'hashtag=' + encodeURIComponent(this.hashtag) : 'username=' + this.username,
                 counter  = this.counter ? '&count=' + this.counter : '',
                 endpoint = this.endpoint + '?' + type + counter;
 
-            this.getJSON(endpoint, this.loadTweets);
+            this.getJSON(endpoint, this.loadTweets.bind(this), this.failure.bind(this));
         },
-        getJSON: function (path, callback) {
-            var xhttp = new XMLHttpRequest(),
-                self  = this;
+        getJSON: function (path, success, fail) {
+            var xhttp = new XMLHttpRequest();
 
             xhttp.open('GET', path, true);
+            xhttp.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhttp.setRequestHeader('Content-type', 'application/json');
             xhttp.onreadystatechange = function () {
                 if (this.readyState === 4) {
                     if ((this.status >= 200 && this.status < 300) || this.status === 304) {
-                        var json = JSON.parse(this.responseText);
-                        callback.call(self, json);
+                        var response = JSON.parse(this.responseText);
+
+                        success.call(this, response);
                     } else {
-                        throw new Error(this.status + " - " + this.statusText);
+                        fail.call(this, this.status + ' - ' + this.statusText);
                     }
                 }
             };
@@ -71,24 +90,27 @@
             }
         },
         displayTweets: function (tweets) {
-            var timeline = document.querySelector(this.container), content = '', imageProfile, i;
+            var timeline = document.querySelector(this.container), content, imageProfile, i;
 
             for (i in tweets) {
                 if (tweets.hasOwnProperty(i)) {
                     if (tweets[i].text) {
                         imageProfile = this.showImageProfile ? '<img class="image-profile" src="' + tweets[i].user.profile_image_url_https + '" alt="' + tweets[i].user.name + '">' : '';
 
-                        content += '<li>' + imageProfile + '<span class="tweet">' + this.twitterLinks(tweets[i].text) + '</span><span class="created">' + this.prettyDate(tweets[i].created_at) + '</span></li>';
+                        content = '<li>' + imageProfile + '<span class="tweet">' + this.twitterLinks(tweets[i].text) + '</span><span class="created">' + this.prettyDate(tweets[i].created_at) + '</span></li>';
+
+                        this.inject(timeline, content);
                     }
                 }
             }
-
-            timeline.innerHTML = content;
         },
         displayError: function (tweets) {
             var timeline = document.querySelector(this.container);
 
-            timeline.innerHTML = '<li class="error">' + tweets.errors[0].message + '</li>';
+            this.inject(timeline, '<li class="error">' + tweets.errors[0].message + '</li>');
+        },
+        failure: function (err) {
+            console.log(err);
         },
         prettyDate: function (dateString) {
             var rightNow = new Date(),
