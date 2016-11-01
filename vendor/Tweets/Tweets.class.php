@@ -37,4 +37,13 @@ class Tweets extends \Codebird\Codebird
 
         return json_encode($data);
     }
+
+    public function render() {
+        $timeline = $this->user_timeline();
+        $hashtag  = $this->hashtag();
+
+        header('Content-type: application/json');
+
+        echo $json = (isset($_GET['hashtag'])) ? $hashtag : $timeline;
+    }
 }

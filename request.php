@@ -10,10 +10,5 @@ $tweetsLoader->register();
 
 use Tweets\Tweets;
 
-$tweets   = new Tweets();
-$timeline = $tweets->user_timeline();
-$hashtag  = $tweets->hashtag();
-
-header('Content-type: application/json');
-
-echo $json = (isset($_GET['hashtag'])) ? $hashtag : $timeline;
+$tweets = new Tweets();
+$tweets->render();
