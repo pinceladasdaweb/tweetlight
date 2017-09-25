@@ -10,7 +10,7 @@ module.exports = function (grunt) {
         },
         uglify: {
             options: {
-                banner: '<%= meta.banner %>\n'
+                banner: '<%= meta.banner %>'
             },
             target: {
                 files: {
