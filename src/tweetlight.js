@@ -52,27 +52,37 @@
                 counter  = this.counter ? '&count=' + this.counter : '',
                 endpoint = this.endpoint + '?' + type + counter;
 
-            this.getJSON(endpoint, this.loadTweets.bind(this), this.failure.bind(this));
+            this.getJSON(endpoint).then(this.loadTweets.bind(this), this.failure.bind(this));
         },
-        getJSON: function (path, success, fail) {
-            var xhttp = new XMLHttpRequest();
+        getJSON: function (path) {
+            return new Promise(function(resolve, reject) {
+                var xhttp = new XMLHttpRequest();
 
-            xhttp.open('GET', path, true);
-            xhttp.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-            xhttp.setRequestHeader('Content-type', 'application/json');
-            xhttp.onreadystatechange = function () {
-                if (this.readyState === 4) {
-                    if ((this.status >= 200 && this.status < 300) || this.status === 304) {
-                        var response = JSON.parse(this.responseText);
+                xhttp.open('GET', path, true);
+                xhttp.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                xhttp.setRequestHeader('Content-type', 'application/json');
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState === 4) {
+                        if ((this.status >= 200 && this.status < 300) || this.status === 304) {
+                            var response = JSON.parse(this.responseText);
 
-                        success.call(this, response);
-                    } else {
-                        fail.call(this, this.status + ' - ' + this.statusText);
+                            resolve(response);
+                        } else {
+                            var error = this.statusText;
+
+                            reject('Http/App Error: ' + error);
+                        }
                     }
                 }
-            };
-            xhttp.send();
-            xhttp = null;
+                xhttp.onerror = processError;
+                xhttp.onabort = processError;
+                xhttp.send();
+                xhttp = null;
+
+                function processError (err) {
+                    reject('Network Error: ' + err.target.status);
+                }
+            });
         },
         loadTweets: function (tweets) {
             var apiStatus = tweets.httpstatus;
