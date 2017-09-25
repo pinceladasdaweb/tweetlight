@@ -99,9 +99,9 @@ It is mandatory to file cacert.pem be on the same level/directory that Codebird.
 
 ## Browser support
 
-![IE](https://cloud.githubusercontent.com/assets/398893/3528325/20373e76-078e-11e4-8e3a-1cb86cf506f0.png) | ![Chrome](https://cloud.githubusercontent.com/assets/398893/3528328/23bc7bc4-078e-11e4-8752-ba2809bf5cce.png) | ![Firefox](https://cloud.githubusercontent.com/assets/398893/3528329/26283ab0-078e-11e4-84d4-db2cf1009953.png) | ![Opera](https://cloud.githubusercontent.com/assets/398893/3528330/27ec9fa8-078e-11e4-95cb-709fd11dac16.png) | ![Safari](https://cloud.githubusercontent.com/assets/398893/3528331/29df8618-078e-11e4-8e3e-ed8ac738693f.png)
+![IE](https://cdnjs.cloudflare.com/ajax/libs/browser-logos/42.9.0/edge/edge_128x128.png) | ![Chrome](https://cdnjs.cloudflare.com/ajax/libs/browser-logos/42.9.0/archive/chrome_12-48/chrome_12-48_128x128.png) | ![Firefox](https://cdnjs.cloudflare.com/ajax/libs/browser-logos/42.9.0/archive/firefox_3.5-22/firefox_3.5-22_128x128.png) | ![Opera](https://cdnjs.cloudflare.com/ajax/libs/browser-logos/42.9.0/archive/opera_15-32/opera_15-32_128x128.png) | ![Safari](https://cdnjs.cloudflare.com/ajax/libs/browser-logos/42.9.0/archive/safari_1-7/safari_1-7_128x128.png)
 --- | --- | --- | --- | --- |
-IE 8+ ✔ | Latest ✔ | Latest ✔ | Latest ✔ | Latest ✔ |
+Edge 14+ ✔ | Latest ✔ | Latest ✔ | Latest ✔ | Latest ✔ |
 
 ## Contributing
 
